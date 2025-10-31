@@ -1,0 +1,7 @@
+# Development dependencies for Multi-Bin Batching
+-r requirements.txt
+
+# Additional dev tools
+ipython>=8.12.0
+jupyter>=1.0.0
+

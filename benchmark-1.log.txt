@@ -1,0 +1,53 @@
+➜  sglang git:(fastipc) ✗ ./benchmark/together/compare.sh
+[2025-10-01 21:27:12] Benchmarking Corvex endpoint...
+benchmark_args=Namespace(backend='sglang-oai', base_url='http://160.72.54.155:30000', host='0.0.0.0', port=None, dataset_name='random', dataset_path='', model=None, tokenizer=None, num_prompts=200, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=512, random_range_ratio=0.0, random_image_num_images=1, random_image_resolution='1080p', request_rate=inf, max_concurrency=124, output_file='benchmark/together/results/sglang_20251001_212712.jsonl', output_details=True, disable_tqdm=False, disable_stream=False, return_logprob=False, seed=42, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, lora_name=None, prompt_suffix='', pd_separated=False, flush_cache=False, warmup_requests=50, tokenize_prompt=False, gsp_num_groups=64, gsp_prompts_per_group=16, gsp_system_prompt_len=2048, gsp_question_len=128, gsp_output_len=256)
+Namespace(backend='sglang-oai', base_url='http://160.72.54.155:30000', host='0.0.0.0', port=30000, dataset_name='random', dataset_path='', model='nvidia/Llama-3.3-70B-Instruct-FP8', tokenizer=None, num_prompts=200, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=512, random_range_ratio=0.0, random_image_num_images=1, random_image_resolution='1080p', request_rate=inf, max_concurrency=124, output_file='benchmark/together/results/sglang_20251001_212712.jsonl', output_details=True, disable_tqdm=False, disable_stream=False, return_logprob=False, seed=42, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, lora_name=None, prompt_suffix='', pd_separated=False, flush_cache=False, warmup_requests=50, tokenize_prompt=False, gsp_num_groups=64, gsp_prompts_per_group=16, gsp_system_prompt_len=2048, gsp_question_len=128, gsp_output_len=256)
+
+#Input tokens: 101360
+#Output tokens: 51429
+Starting warmup with 50 sequences...
+Warmup completed with 50 sequences. Starting main benchmark run...
+100%|████████████████████████████████████████████| 200/200 [00:27<00:00,  7.27it/s]
+
+============ Serving Benchmark Result ============
+Backend:                                 sglang-oai
+Traffic request rate:                    inf
+Max request concurrency:                 124
+Successful requests:                     200
+Benchmark duration (s):                  27.81
+Total input tokens:                      101360
+Total generated tokens:                  51429
+Total generated tokens (retokenized):    51376
+Request throughput (req/s):              7.19
+Input token throughput (tok/s):          3644.88
+Output token throughput (tok/s):         1849.37
+Total token throughput (tok/s):          5494.25
+Concurrency:                             98.68
+----------------End-to-End Latency----------------
+Mean E2E Latency (ms):                   13720.46
+Median E2E Latency (ms):                 13340.44                                  ---------------Time to First Token----------------                                 Mean TTFT (ms):                          2785.01                                   Median TTFT (ms):                        1433.30                                   P99 TTFT (ms):                           8602.97                                   ---------------Inter-Token Latency----------------                                 Mean ITL (ms):                           42.82                                     Median ITL (ms):                         19.60                                     P95 ITL (ms):                            155.63                                    P99 ITL (ms):                            643.31                                    Max ITL (ms):                            1548.81                                   ==================================================
+[2025-10-01 21:27:52] Benchmarking Together.ai endpoint...
+benchmark_args=Namespace(backend='vllm', base_url='https://api.together.xyz', host='0.0.0.0', port=None, dataset_name='random', dataset_path='', model='cdconsulting/meta-llama/Llama-3.3-70B-Instruct-Turbo-7d64819a', tokenizer='meta-llama/Llama-3.3-70B-Instruct', num_prompts=200, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=512, random_range_ratio=0.0, random_image_num_images=1, random_image_resolution='1080p', request_rate=inf, max_concurrency=23, output_file='benchmark/together/results/togetherai_20251001_212712.jsonl', output_details=True, disable_tqdm=False, disable_stream=False, return_logprob=False, seed=42, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, lora_name=None, prompt_suffix='', pd_separated=False, flush_cache=False, warmup_requests=50, tokenize_prompt=False, gsp_num_groups=64, gsp_prompts_per_group=16, gsp_system_prompt_len=2048, gsp_question_len=128, gsp_output_len=256)   Fail to load tokenizer config with error=Repo id must be in the form 'repo_name' or 'namespace/repo_name': 'cdconsulting/meta-llama/Llama-3.3-70B-Instruct-Turbo-7d64819a'. Use `repo_type` argument if needed.                                                                                                                             WARNING It is recommended to use the `Chat` or `Instruct` model for benchmarking.  Because when the tokenizer counts the output tokens, if there is gibberish, it might count incorrectly.                                                                                                                                                  Namespace(backend='vllm', base_url='https://api.together.xyz', host='0.0.0.0', port=8000, dataset_name='random', dataset_path='', model='cdconsulting/meta-llama/Llama-3.3-70B-Instruct-Turbo-7d64819a', tokenizer='meta-llama/Llama-3.3-70B-Instruct', num_prompts=200, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=512, random_range_ratio=0.0, random_image_num_images=1, random_image_resolution='1080p', request_rate=inf, max_concurrency=23, output_file='benchmark/together/results/togetherai_20251001_212712.jsonl', output_details=True, disable_tqdm=False, disable_stream=False, return_logprob=False, seed=42, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, lora_name=None, prompt_suffix='', pd_separated=False, flush_cache=False, warmup_requests=50, tokenize_prompt=False, gsp_num_groups=64, gsp_prompts_per_group=16, gsp_system_prompt_len=2048, gsp_question_len=128, gsp_output_len=256)                                                                                                     #Input tokens: 101360                                                              #Output tokens: 51429
+Starting warmup with 50 sequences...                                               Warmup completed with 50 sequences. Starting main benchmark run...                 100%|████████████████████████████████████████████| 200/200 [00:53<00:00,  3.72it/s]                                                                                   ============ Serving Benchmark Result ============                                 Backend:                                 vllm                                      Traffic request rate:                    inf                                       Max request concurrency:                 23                                        Successful requests:                     200                                       Benchmark duration (s):                  53.76                                     Total input tokens:                      101360                                    Total generated tokens:                  51429
+Total generated tokens (retokenized):    49344
+Request throughput (req/s):              3.72
+Input token throughput (tok/s):          1885.34
+Output token throughput (tok/s):         956.60
+Total token throughput (tok/s):          2841.94
+Concurrency:                             19.57
+----------------End-to-End Latency----------------
+Mean E2E Latency (ms):                   5260.70
+Median E2E Latency (ms):                 4441.21
+---------------Time to First Token----------------
+Mean TTFT (ms):                          2072.08
+Median TTFT (ms):                        1791.84
+P99 TTFT (ms):                           4811.03
+---------------Inter-Token Latency----------------
+Mean ITL (ms):                           12.99
+Median ITL (ms):                         0.02
+P95 ITL (ms):                            99.96
+P99 ITL (ms):                            224.99
+Max ITL (ms):                            1947.56
+==================================================
+[2025-10-01 21:28:58] Benchmark finished.
+➜  sglang git:(fastipc) ✗
