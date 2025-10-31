@@ -79,7 +79,7 @@ class VLLMBenchmark:
             self.mbb_adapter = VLLMMBBAdapter(
                 num_bins=self.manifest.scheduler.num_bins,
                 bin_edges=self.manifest.scheduler.bin_edges,
-                batch_size=self.manifest.system.max_batch_size or 256,
+                batch_size=256,
                 predictor_type=self.manifest.scheduler.predictor_type,
                 starvation_ms=self.manifest.scheduler.starvation_ms,
                 use_equal_mass_bins=True
