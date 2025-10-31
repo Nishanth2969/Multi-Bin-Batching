@@ -105,17 +105,46 @@ def test_adaptive_predictor():
 
 def main():
     """Run all verification tests."""
-    try:
-        test_algorithm_1()
-        test_lemma_4_1()
-        test_throughput_improvement()
-        test_equal_mass_warmup()
-        test_adaptive_predictor()
-        return True
-    except AssertionError:
-        return False
+    tests = [
+        ("Algorithm 1 (batch formation, service queue)", test_algorithm_1),
+        ("Lemma 4.1 (equal-mass bins)", test_lemma_4_1),
+        ("Throughput improvement with k-bins", test_throughput_improvement),
+        ("Equal-mass warmup histogram", test_equal_mass_warmup),
+        ("Adaptive predictor learning", test_adaptive_predictor),
+    ]
+    
+    print("="*70)
+    print("Multi-Bin Batching - Paper Verification")
+    print("="*70)
+    print()
+    
+    passed = 0
+    failed = 0
+    
+    for test_name, test_func in tests:
+        try:
+            test_func()
+            print(f"✓ {test_name}")
+            passed += 1
+        except Exception as e:
+            print(f"✗ {test_name}: {e}")
+            failed += 1
+    
+    print()
+    print("="*70)
+    print(f"Results: {passed}/{len(tests)} tests passed")
+    print("="*70)
+    
+    if failed == 0:
+        print("\n✓ All paper claims verified! Implementation is correct.")
+        print("✓ Ready for GPU benchmarking!")
+        return 0
+    else:
+        print(f"\n✗ {failed} test(s) failed. Fix before benchmarking.")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    sys.exit(main())
 
