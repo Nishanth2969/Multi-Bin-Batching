@@ -60,7 +60,7 @@ class VLLMBenchmark:
         # Initialize LLM engine
         print(f"Loading model: {self.manifest.system.model_name}")
         
-        # Build vLLM kwargs
+        # Build vLLM kwargs (no custom scheduler args - we patch at runtime)
         vllm_kwargs = {
             "model": self.manifest.system.model_name,
             "dtype": self.manifest.system.dtype,
@@ -69,22 +69,25 @@ class VLLMBenchmark:
             "gpu_memory_utilization": 0.9,
         }
         
-        # Add MBB scheduler args if needed
-        if self.manifest.scheduler.policy == "multi_bin":
-            # Note: This requires our modified vLLM with --scheduler-policy support
-            vllm_kwargs.update({
-                "scheduler_policy": "multi_bin",
-                "mbb_bins": self.manifest.scheduler.num_bins,
-                "mbb_predictor": self.manifest.scheduler.predictor_type,
-                "mbb_starvation_ms": self.manifest.scheduler.starvation_ms,
-            })
-            
-            if self.manifest.scheduler.bin_edges:
-                edges_str = ",".join(map(str, self.manifest.scheduler.bin_edges))
-                vllm_kwargs["mbb_bin_edges"] = edges_str
-        
         self.vllm_engine = LLM(**vllm_kwargs)
         print(f"Model loaded successfully")
+        
+        # Apply MBB scheduler patch if needed
+        if self.manifest.scheduler.policy == "multi_bin":
+            from adapters.vllm.scheduler_patch import VLLMMBBAdapter, patch_vllm_scheduler
+            
+            self.mbb_adapter = VLLMMBBAdapter(
+                num_bins=self.manifest.scheduler.num_bins,
+                bin_edges=self.manifest.scheduler.bin_edges,
+                batch_size=self.manifest.system.max_batch_size or 256,
+                predictor_type=self.manifest.scheduler.predictor_type,
+                starvation_ms=self.manifest.scheduler.starvation_ms,
+                use_equal_mass_bins=True
+            )
+            
+            patch_vllm_scheduler(self.vllm_engine, self.mbb_adapter)
+        else:
+            self.mbb_adapter = None
     
     def load_prompts(self) -> List[str]:
         """Load prompts from dataset.
@@ -135,6 +138,7 @@ class VLLMBenchmark:
         # Run inference
         print(f"\nRunning inference on {len(prompts)} prompts...")
         start_time = time.time()
+        start_time_ms = int(start_time * 1000)
         
         try:
             # Generate outputs
@@ -151,8 +155,8 @@ class VLLMBenchmark:
                 self.metrics.record_request_start(
                     req_id=i,
                     prompt_tokens=prompt_tokens,
-                    arrival_time_ms=int(start_time * 1000),
-                    predicted_bin=-1,  # TODO: extract from vLLM if available
+                    arrival_time_ms=start_time_ms,
+                    predicted_bin=-1,
                     admit_bin=-1
                 )
                 self.metrics.record_request_completion(
@@ -171,15 +175,23 @@ class VLLMBenchmark:
             self.gpu_monitor.stop()
         
         end_time = time.time()
+        end_time_ms = int(end_time * 1000)
         duration_s = end_time - start_time
+        
+        # Update metrics collector time
+        self.metrics.update_time(end_time_ms)
         
         print(f"\nBenchmark completed in {duration_s:.1f}s")
         
         # Get summary
         summary = self.metrics.get_summary()
         summary['run_id'] = self.manifest.run_id
-        summary['duration_s'] = duration_s
+        summary['duration_seconds'] = duration_s
         summary['manifest'] = self.manifest.to_dict()
+        
+        # Fix throughput calculation
+        if summary.get('total_output_tokens', 0) > 0 and duration_s > 0:
+            summary['output_tps'] = summary['total_output_tokens'] / duration_s
         
         return summary
     
@@ -257,18 +269,18 @@ def main():
     print("BENCHMARK SUMMARY")
     print("="*80)
     print(f"Run ID: {results['run_id']}")
-    print(f"Duration: {results['duration_s']:.1f}s")
+    print(f"Duration: {results.get('duration_seconds', results.get('duration_s', 0)):.1f}s")
     print(f"Requests: {results['num_requests']}")
-    print(f"Total Tokens: {results['total_tokens']}")
-    print(f"Throughput: {results['tps']:.2f} tokens/s")
+    print(f"Total Output Tokens: {results.get('total_output_tokens', 0):,}")
+    print(f"Output Throughput: {results.get('output_tps', results.get('tps', 0)):.1f} tokens/s")
     print(f"TTFT P50: {results.get('ttft_p50_ms', 0):.1f}ms")
     print(f"TTFT P95: {results.get('ttft_p95_ms', 0):.1f}ms")
     print(f"TPOT P50: {results.get('tpot_p50_ms', 0):.2f}ms")
     print(f"TPOT P95: {results.get('tpot_p95_ms', 0):.2f}ms")
     
     if 'avg_sm_util' in results:
-        print(f"Avg SM Util: {results['avg_sm_util']:.1f}%")
-        print(f"Avg VRAM: {results['avg_mem_used_mb']:.0f}MB")
+        print(f"Avg GPU SM Util: {results['avg_sm_util']:.1f}%")
+        print(f"Avg VRAM Used: {results['avg_mem_used_mb']:.0f}MB")
     
     print("="*80)
 
