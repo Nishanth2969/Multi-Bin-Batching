@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Adversarial Stress Test Generator for Multi-Bin Batching
+Adversarial Stress Test for Multi-Bin Batching using SGLang
 
 Creates worst-case workload for baseline continuous batching to demonstrate
 maximum MBB improvement (~2× throughput).
@@ -14,6 +14,8 @@ Design:
 
 import random
 import os
+import sys
+import subprocess
 from pathlib import Path
 
 
@@ -157,15 +159,21 @@ def create_stress_test_manifest(output_dir: str = "bench/manifests"):
     return baseline_path, mbb_path
 
 
-def run_stress_test():
-    """Run stress test comparison."""
+def run_stress_test(base_url: str = "http://localhost:30000"):
+    """Run stress test comparison.
+    
+    Args:
+        base_url: SGLang server base URL
+    """
     import subprocess
     
     print("="*80)
-    print("ADVERSARIAL STRESS TEST")
+    print("ADVERSARIAL STRESS TEST - SGLang + Multi-Bin Batching")
     print("="*80)
     print("\nThis test demonstrates maximum MBB improvement (~2×)")
     print("by creating worst-case workload for baseline batching.\n")
+    print(f"SGLang Server: {base_url}")
+    print("="*80)
     
     # Generate dataset
     dataset_path = "data/stress_test.txt"
@@ -179,8 +187,9 @@ def run_stress_test():
     print("="*80)
     
     baseline_result = subprocess.run([
-        'python', 'bench/vllm_benchmark.py',
+        'python', 'bench/sglang_benchmark.py',
         '--manifest', baseline_path,
+        '--base-url', base_url,
         '--output', 'results/stress_baseline.csv'
     ])
     
@@ -189,8 +198,9 @@ def run_stress_test():
     print("="*80)
     
     mbb_result = subprocess.run([
-        'python', 'bench/vllm_benchmark.py',
+        'python', 'bench/sglang_benchmark.py',
         '--manifest', mbb_path,
+        '--base-url', base_url,
         '--output', 'results/stress_mbb_k16.csv'
     ])
     
@@ -208,13 +218,28 @@ def run_stress_test():
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
     
-    if len(sys.argv) > 1 and sys.argv[1] == 'generate':
+    parser = argparse.ArgumentParser(description="SGLang + MBB Stress Test")
+    parser.add_argument(
+        '--base-url',
+        type=str,
+        default='http://localhost:30000',
+        help='SGLang server base URL'
+    )
+    parser.add_argument(
+        '--generate-only',
+        action='store_true',
+        help='Only generate dataset/manifests without running benchmark'
+    )
+    
+    args = parser.parse_args()
+    
+    if args.generate_only:
         # Just generate dataset/manifests
         generate_stress_test_dataset("data/stress_test.txt")
         create_stress_test_manifest()
     else:
         # Run full stress test
-        run_stress_test()
+        run_stress_test(base_url=args.base_url)
 
